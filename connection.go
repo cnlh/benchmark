@@ -10,6 +10,7 @@ import (
 	"io"
 	"net"
 	"strconv"
+	"strings"
 	"sync/atomic"
 	"time"
 	"unsafe"
@@ -67,7 +68,7 @@ func (rc *ReqConn) Start() (err error) {
 	var n int
 	var reqTime time.Time
 re:
-	if err != nil && err != io.EOF {
+	if err != nil && err != io.EOF && !strings.Contains(err.Error(), "connection reset by peer") {
 		rc.ErrorTimes += 1
 	}
 	if err = rc.dial(); err != nil {

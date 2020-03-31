@@ -46,7 +46,7 @@ func main() {
 		runtime.GOMAXPROCS(*cpu)
 	}
 	if *header != "" {
-		for _, v := range strings.Split(*header, "\r\n") {
+		for _, v := range strings.Split(*header, "\\r\\n") {
 			a := strings.Split(v, ":")
 			if len(a) == 2 {
 				req.Header.Set(strings.Trim(a[0], " "), strings.Trim(a[1], " "))

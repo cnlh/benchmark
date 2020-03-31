@@ -31,6 +31,7 @@ type benchmark struct {
 // Start benchmark with the param has setting
 func (pf *benchmark) Run() {
 	fmt.Printf("Running %d test @ %s by %d connections\n", pf.reqNum, pf.target, pf.connectionNum)
+	fmt.Printf("Requset as following format:\n\n%s\n", string(pf.requestBytes))
 	dialer, err := NewProxyConn(pf.proxy)
 	if err != nil {
 		fmt.Println(err)

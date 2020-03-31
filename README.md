@@ -42,11 +42,19 @@ with the flags being
 for example
 ```shell script
 benchmark -c 1100 -n 1000000  http://127.0.0.1/
+benchmark -c 1100 -n 1000000 -proxy http://111:222@127.0.0.1:1235 http://127.0.0.1/
+benchmark -c 1100 -n 1000000 -proxy socks5://111:222@127.0.0.1:1235 http://127.0.0.1/
+benchmark -c 1100 -n 1000000 -header "Connection: close\r\nCache-Control: no-cache" http://127.0.0.1/
 ```
 
 ## Example Output
 ```shell script
 Running 1000000 test @ 127.0.0.1:80 by 1100 connections
+Requset as following format:
+
+GET / HTTP/1.1
+Host: 127.0.0.1:80
+
 1000000 requests in 5.73s, 4.01GB read, 33.42MB write
 Requests/sec: 174420.54
 Transfer/sec: 721.21MB
