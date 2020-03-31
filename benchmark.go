@@ -31,7 +31,12 @@ type benchmark struct {
 // Start benchmark with the param has setting
 func (pf *benchmark) Run() {
 	fmt.Printf("Running %d test @ %s by %d connections\n", pf.reqNum, pf.target, pf.connectionNum)
-	var err error
+	dialer, err := NewProxyConn(pf.proxy)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(0)
+	}
+
 	pf.startTime = time.Now()
 	pf.wg.Add(pf.connectionNum)
 	for i := 0; i < pf.connectionNum; i++ {
@@ -44,7 +49,7 @@ func (pf *benchmark) Run() {
 			remoteAddr: pf.target,
 			schema:     pf.schema,
 			buf:        make([]byte, 65535),
-			proxy:      pf.proxy,
+			dialer:     dialer,
 		}
 		go func() {
 			if err = rc.Start(); err != nil {
@@ -57,6 +62,7 @@ func (pf *benchmark) Run() {
 	}
 	pf.wg.Wait()
 	pf.endTime = time.Now()
+
 	return
 }
 

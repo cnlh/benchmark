@@ -5,15 +5,10 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"crypto/tls"
-	"errors"
-	"golang.org/x/net/proxy"
 	"io"
 	"net"
-	"net/http"
-	"net/url"
 	"strconv"
 	"sync/atomic"
 	"time"
@@ -41,7 +36,7 @@ type ReqConn struct {
 	remoteAddr string
 	schema     string
 	buf        []byte
-	proxy      string
+	dialer     ProxyConn
 }
 
 // Connect to the server, http and socks5 proxy support
@@ -50,29 +45,7 @@ func (rc *ReqConn) dial() error {
 	if rc.conn != nil {
 		rc.conn.Close()
 	}
-	var err error
-	var conn net.Conn
-	if rc.proxy != "" {
-		var u *url.URL
-		var d proxy.Dialer
-		u, err = url.Parse(rc.proxy)
-		if err != nil {
-			return err
-		}
-		switch u.Scheme {
-		case "socks5":
-			d, err = proxy.FromURL(u, nil)
-			if err != nil {
-				return err
-			}
-			conn, err = d.Dial("tcp", rc.remoteAddr)
-		default:
-			conn, err = NewHttpProxyConn(u, rc.remoteAddr)
-		}
-
-	} else {
-		conn, err = net.DialTimeout("tcp", rc.remoteAddr, time.Millisecond*time.Duration(rc.timeout))
-	}
+	conn, err := rc.dialer.Dial("tcp", rc.remoteAddr, time.Millisecond*time.Duration(rc.timeout))
 	if err != nil {
 		return err
 	}
@@ -156,30 +129,4 @@ re:
 // Convert bytes to strings
 func Bytes2str(b []byte) string {
 	return *(*string)(unsafe.Pointer(&b))
-}
-
-// Create a connection by http proxy server
-func NewHttpProxyConn(url *url.URL, remoteAddr string) (net.Conn, error) {
-	req, err := http.NewRequest("CONNECT", "http://"+remoteAddr, nil)
-	if err != nil {
-		return nil, err
-	}
-	password, _ := url.User.Password()
-	req.SetBasicAuth(url.User.Username(), password)
-	proxyConn, err := net.Dial("tcp", url.Host)
-	if err != nil {
-		return nil, err
-	}
-	if err := req.Write(proxyConn); err != nil {
-		return nil, err
-	}
-	res, err := http.ReadResponse(bufio.NewReader(proxyConn), req)
-	if err != nil {
-		return nil, err
-	}
-	_ = res.Body.Close()
-	if res.StatusCode != 200 {
-		return nil, errors.New("Proxy error " + res.Status)
-	}
-	return proxyConn, nil
 }
