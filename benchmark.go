@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type performance struct {
+type benchmark struct {
 	connectionNum int
 	reqNum        int64
 	requestBytes  []byte
@@ -23,7 +23,7 @@ type performance struct {
 	reqConnList   []*ReqConn
 }
 
-func (pf *performance) Run() {
+func (pf *benchmark) Run() {
 	fmt.Printf("Running %d test @ %s by %d connections\n", pf.reqNum, pf.target, pf.connectionNum)
 	var err error
 	pf.startTime = time.Now()
@@ -54,7 +54,7 @@ func (pf *performance) Run() {
 	return
 }
 
-func (pf *performance) Print() {
+func (pf *benchmark) Print() {
 	readAll := 0
 	writeAll := 0
 	allTimes := make([]int, 0)
@@ -103,6 +103,5 @@ func formatFlow(size float64) string {
 	}
 
 	srt := fmt.Sprintf("%.2f%v", rt, suffix)
-
 	return srt
 }

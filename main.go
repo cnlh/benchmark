@@ -57,7 +57,7 @@ func main() {
 		}
 	}
 
-	p := &performance{
+	p := &benchmark{
 		connectionNum: *connectionNum,
 		reqNum:        int64(*requestNum),
 		requestBytes:  writeBytes,
