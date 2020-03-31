@@ -1,3 +1,7 @@
+// Copyright 2020 The benchmark. All rights reserved.
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file.
+
 package main
 
 import (
@@ -5,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httputil"
+	"net/url"
 	"runtime"
 	"strings"
 )
@@ -23,6 +28,10 @@ var (
 
 func main() {
 	flag.Parse()
+	if u, err := url.Parse(flag.Arg(0)); err != nil || u.Host == "" {
+		fmt.Printf("the request url %s is not correct \n", flag.Arg(0))
+		return
+	}
 	payload := strings.NewReader(*body)
 	req, err := http.NewRequest(*method, flag.Arg(0), payload)
 	if err != nil {

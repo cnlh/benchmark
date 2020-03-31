@@ -6,7 +6,7 @@ A simple benchmark testing tool implemented in golang, the basic functions refer
 - simple code, easy to change
 ## Building
 
-```
+```shell script
 git clone git://github.com/cnlh/benchmark.git
 cd benchmark
 go build
@@ -14,12 +14,12 @@ go build
 ## Usage
 
 basic usage is quite simple:
-```
+```shell script
 benchmark [flags] url
 ```
 
 with the flags being
-```
+```shell script
     -b string
       	the body of request
     -c int
@@ -40,7 +40,7 @@ with the flags being
     	proxy of request
 ```
 for example
-```
+```shell script
 benchmark -c 1100 -n 1000000  http://127.0.0.1/
 ```
 

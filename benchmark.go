@@ -1,3 +1,7 @@
+// Copyright 2020 The benchmark. All rights reserved.
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file.
+
 package main
 
 import (
@@ -8,6 +12,7 @@ import (
 	"time"
 )
 
+// benchmark is used to manager connection and deal with the result
 type benchmark struct {
 	connectionNum int
 	reqNum        int64
@@ -23,6 +28,7 @@ type benchmark struct {
 	reqConnList   []*ReqConn
 }
 
+// Start benchmark with the param has setting
 func (pf *benchmark) Run() {
 	fmt.Printf("Running %d test @ %s by %d connections\n", pf.reqNum, pf.target, pf.connectionNum)
 	var err error
@@ -54,6 +60,7 @@ func (pf *benchmark) Run() {
 	return
 }
 
+// Print the result of benchmark on console
 func (pf *benchmark) Print() {
 	readAll := 0
 	writeAll := 0
@@ -65,10 +72,10 @@ func (pf *benchmark) Print() {
 		allTimes = append(allTimes, v.reqTimes...)
 		allError += v.ErrorTimes
 	}
-	second := pf.endTime.Sub(pf.startTime).Seconds()
-	fmt.Printf("%d requests in %.2fs, %s read, %s write\n", pf.reqNum, second, formatFlow(float64(readAll)), formatFlow(float64(writeAll)))
-	fmt.Printf("Requests/sec: %.2f\n", float64(pf.reqNum)/second)
-	fmt.Printf("Transfer/sec: %s\n", formatFlow(float64(readAll+writeAll)/second))
+	runSecond := pf.endTime.Sub(pf.startTime).Seconds()
+	fmt.Printf("%d requests in %.2fs, %s read, %s write\n", pf.reqNum, runSecond, formatFlow(float64(readAll)), formatFlow(float64(writeAll)))
+	fmt.Printf("Requests/sec: %.2f\n", float64(pf.reqNum)/runSecond)
+	fmt.Printf("Transfer/sec: %s\n", formatFlow(float64(readAll+writeAll)/runSecond))
 	fmt.Printf("Error       : %d\n", allError)
 	sort.Ints(allTimes)
 	rates := []int{50, 65, 75, 80, 90, 95, 98, 99, 100}
@@ -78,6 +85,7 @@ func (pf *benchmark) Print() {
 	}
 }
 
+// Format the flow data
 func formatFlow(size float64) string {
 	var rt float64
 	var suffix string
@@ -87,7 +95,6 @@ func formatFlow(size float64) string {
 		MByte = KByte * 1024
 		GByte = MByte * 1024
 	)
-
 	if size > GByte {
 		rt = size / GByte
 		suffix = "GB"
@@ -101,7 +108,5 @@ func formatFlow(size float64) string {
 		rt = size
 		suffix = "bytes"
 	}
-
-	srt := fmt.Sprintf("%.2f%v", rt, suffix)
-	return srt
+	return fmt.Sprintf("%.2f%v", rt, suffix)
 }
