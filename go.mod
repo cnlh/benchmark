@@ -1,4 +1,4 @@
-module github.com/cnlh/perfor
+module github.com/cnlh/benchmark
 
 go 1.13
 
