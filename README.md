@@ -11,7 +11,7 @@ git clone git://github.com/cnlh/benchmark.git
 cd benchmark
 go build
 ```
-## usage
+## Usage
 
 basic usage is quite simple:
 ```
