@@ -14,14 +14,6 @@ import (
 	"unsafe"
 )
 
-var (
-	bodyHeaderSepBytes    = []byte{13, 10, 13, 10}
-	bodyHeaderSepBytesLen = 4
-	headerSepBytes        = []byte{13, 10}
-	contentLengthBytes    = []byte{67, 111, 110, 116, 101, 110, 116, 45, 76, 101, 110, 103, 116, 104, 58, 32}
-	contentLengthBytesLen = 16
-)
-
 // ReqConn is used to create a connection and record data
 type ReqConn struct {
 	ErrorTimes int

@@ -37,11 +37,15 @@ type ProxyConn interface {
 
 // DefaultClient is used to implement a proxy in default
 type DefaultClient struct {
+	d net.Dialer
 }
 
-// socks5 implementation of ProxyConn
-func (s5 DefaultClient) Dial(network string, address string, timeout time.Duration) (net.Conn, error) {
-	return net.DialTimeout(network, address, timeout)
+// Socks5 implementation of ProxyConn
+// Set KeepAlive=-1 to reduce the call of syscall
+func (dc DefaultClient) Dial(network string, address string, timeout time.Duration) (net.Conn, error) {
+	dc.d.KeepAlive = -1
+	dc.d.Timeout = timeout
+	return dc.d.Dial(network, address)
 }
 
 // Socks5Client is used to implement a proxy in socks5
@@ -71,7 +75,7 @@ func (hc *HttpClient) Dial(network string, address string, timeout time.Duration
 	}
 	password, _ := hc.proxyUrl.User.Password()
 	req.SetBasicAuth(hc.proxyUrl.User.Username(), password)
-	proxyConn, err := net.Dial("tcp", hc.proxyUrl.Host)
+	proxyConn, err := net.DialTimeout("tcp", hc.proxyUrl.Host, timeout)
 	if err != nil {
 		return nil, err
 	}
