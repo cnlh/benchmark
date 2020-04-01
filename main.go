@@ -20,7 +20,7 @@ var (
 	timeout       = flag.Int("t", 10000, "request/socket timeout in ms")
 	connectionNum = flag.Int("c", 1000, "number of connection")
 	requestNum    = flag.Int("n", 100000, "number of request")
-	body          = flag.String("b", "", "ody of request")
+	body          = flag.String("b", "", "body of request")
 	cpu           = flag.Int("cpu", 0, "number of cpu used")
 	host          = flag.String("host", "", "host of request")
 	proxyUrl      = flag.String("proxy", "", "proxy of request")

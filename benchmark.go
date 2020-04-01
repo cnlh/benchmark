@@ -45,12 +45,11 @@ func (pf *benchmark) Run() {
 			Count:      pf.reqNum,
 			NowNum:     &pf.finishNum,
 			timeout:    pf.timeout,
-			writeBytes: pf.requestBytes,
 			reqTimes:   make([]int, 0),
 			remoteAddr: pf.target,
 			schema:     pf.schema,
-			buf:        make([]byte, 65535),
 			dialer:     dialer,
+			readWriter: NewHttpReadWriter(pf.requestBytes),
 		}
 		go func() {
 			if err = rc.Start(); err != nil {
