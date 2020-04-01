@@ -9,9 +9,7 @@ A simple benchmark testing tool implemented in golang, the basic functions refer
 ## Building
 
 ```shell script
-git clone git://github.com/cnlh/benchmark.git
-cd benchmark
-go build
+go get github.com/cnlh/benchmark
 ```
 ## Usage
 
@@ -46,7 +44,7 @@ for example
 benchmark -c 1100 -n 1000000  http://127.0.0.1/
 benchmark -c 1100 -n 1000000 -proxy http://111:222@127.0.0.1:1235 http://127.0.0.1/
 benchmark -c 1100 -n 1000000 -proxy socks5://111:222@127.0.0.1:1235 http://127.0.0.1/
-benchmark -c 1100 -n 1000000 -header "Connection: close\r\nCache-Control: no-cache" http://127.0.0.1/
+benchmark -c 1100 -n 1000000 -h "Connection: close\r\nCache-Control: no-cache" http://127.0.0.1/
 ```
 
 ## Example Output
