@@ -1,5 +1,7 @@
 # Benchmark
 A simple benchmark testing tool implemented in golang, the basic functions refer to wrk and ab, added some small features based on personal needs.
+
+![Build](https://github.com/cnlh/benchmark/workflows/Build/badge.svg) [![Go Report Card](https://goreportcard.com/badge/github.com/cnlh/benchmark)](https://goreportcard.com/report/github.com/cnlh/benchmark)
 ## Why use Benchmark?
 - http and socks5 proxy support
 - good performance as wrk(some implements in golang not work well)
@@ -7,9 +9,7 @@ A simple benchmark testing tool implemented in golang, the basic functions refer
 ## Building
 
 ```shell script
-git clone git://github.com/cnlh/benchmark.git
-cd benchmark
-go build
+go get github.com/cnlh/benchmark
 ```
 ## Usage
 
@@ -44,7 +44,7 @@ for example
 benchmark -c 1100 -n 1000000  http://127.0.0.1/
 benchmark -c 1100 -n 1000000 -proxy http://111:222@127.0.0.1:1235 http://127.0.0.1/
 benchmark -c 1100 -n 1000000 -proxy socks5://111:222@127.0.0.1:1235 http://127.0.0.1/
-benchmark -c 1100 -n 1000000 -header "Connection: close\r\nCache-Control: no-cache" http://127.0.0.1/
+benchmark -c 1100 -n 1000000 -h "Connection: close\r\nCache-Control: no-cache" http://127.0.0.1/
 ```
 
 ## Example Output

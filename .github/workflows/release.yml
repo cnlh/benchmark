@@ -1,0 +1,51 @@
+on: release
+name: Build
+jobs:
+  release-linux-amd64:
+    name: release linux/amd64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build
+        run: |
+          GOOS=linux GOARCH=amd64 go build
+          tar -zcvf benchmark_linux_amd64.tar.gz benchmark
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: benchmark_linux_amd64.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  release-windows-amd64:
+    name: release windows/amd64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build
+        run: |
+          GOOS=windows GOARCH=amd64 go build
+          tar -zcvf benchmark_windows_amd64.tar.gz benchmark.exe
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: benchmark_windows_amd64.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  release-darwin-amd64:
+    name: release darwin/amd64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build
+        run: |
+          GOOS=darwin GOARCH=amd64 go build
+          tar -zcvf benchmark_darwin_amd64.tar.gz benchmark
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: benchmark_darwin_amd64.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
