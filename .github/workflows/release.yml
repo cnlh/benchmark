@@ -8,11 +8,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Build
-        run: GOOS=linux GOARCH=amd64 go build
+        run: |
+          GOOS=linux GOARCH=amd64 go build
+          tar -zcvf benmark_linux_amd64.tar.gz benmark
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: benchmark
+          files: benchmark_linux_amd64.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   release-windows-amd64:
@@ -22,11 +24,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Build
-        run: GOOS=windows GOARCH=amd64 go build
+        run: |
+          GOOS=windows GOARCH=amd64 go build
+          tar -zcvf benmark_windows_amd64.tar.gz benmark.exe
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: benchmark.exe
+          files: benchmark_windows_amd64.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   release-darwin-amd64:
@@ -36,10 +40,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Build
-        run: GOOS=darwin GOARCH=amd64 go build
+        run: |
+          GOOS=darwin GOARCH=amd64 go build
+          tar -zcvf benmark_darwin_amd64.tar.gz benmark
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: benchmark
+          files: benchmark_darwin_amd64.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
