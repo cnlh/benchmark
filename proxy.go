@@ -26,7 +26,7 @@ func NewProxyConn(proxyUrl string) (ProxyConn, error) {
 	case "http":
 		return &HttpClient{u}, nil
 	default:
-		return DefaultClient{}, nil
+		return &DefaultClient{}, nil
 	}
 }
 
@@ -37,15 +37,19 @@ type ProxyConn interface {
 
 // DefaultClient is used to implement a proxy in default
 type DefaultClient struct {
-	d net.Dialer
+	rAddr *net.TCPAddr
 }
 
 // Socks5 implementation of ProxyConn
 // Set KeepAlive=-1 to reduce the call of syscall
-func (dc DefaultClient) Dial(network string, address string, timeout time.Duration) (net.Conn, error) {
-	dc.d.KeepAlive = -1
-	dc.d.Timeout = timeout
-	return dc.d.Dial(network, address)
+func (dc *DefaultClient) Dial(network string, address string, timeout time.Duration) (conn net.Conn, err error) {
+	if dc.rAddr == nil {
+		dc.rAddr, err = net.ResolveTCPAddr("tcp", "127.0.0.1:80")
+		if err != nil {
+			return nil, err
+		}
+	}
+	return net.DialTCP(network, nil, dc.rAddr)
 }
 
 // Socks5Client is used to implement a proxy in socks5
