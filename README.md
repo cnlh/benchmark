@@ -70,3 +70,6 @@ Percentage of the requests served within a certain time (ms)
     99%				23
    100%				107
 ```
+
+## Known Issues
+- Consumes more cpu when testing short connections
