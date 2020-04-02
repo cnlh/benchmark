@@ -44,7 +44,7 @@ type DefaultClient struct {
 // Set KeepAlive=-1 to reduce the call of syscall
 func (dc *DefaultClient) Dial(network string, address string, timeout time.Duration) (conn net.Conn, err error) {
 	if dc.rAddr == nil {
-		dc.rAddr, err = net.ResolveTCPAddr("tcp", "127.0.0.1:80")
+		dc.rAddr, err = net.ResolveTCPAddr("tcp", address)
 		if err != nil {
 			return nil, err
 		}
