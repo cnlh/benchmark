@@ -24,6 +24,7 @@ var (
 	cpu           = flag.Int("cpu", 0, "number of cpu used")
 	host          = flag.String("host", "", "host of request")
 	proxyUrl      = flag.String("proxy", "", "proxy of request")
+	ignoreErr     = flag.Bool("ignore-err", false, "`true` to ignore error when creating connection (default false)")
 )
 
 func main() {

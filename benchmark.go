@@ -9,6 +9,7 @@ import (
 	"os"
 	"sort"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -31,7 +32,7 @@ type benchmark struct {
 // Start benchmark with the param has setting
 func (pf *benchmark) Run() {
 	fmt.Printf("Running %d test @ %s by %d connections\n", pf.reqNum, pf.target, pf.connectionNum)
-	fmt.Printf("Requset as following format:\n\n%s\n", string(pf.requestBytes))
+	fmt.Printf("Request as following format:\n\n%s\n", string(pf.requestBytes))
 	dialer, err := NewProxyConn(pf.proxy)
 	if err != nil {
 		fmt.Println(err)
@@ -40,6 +41,7 @@ func (pf *benchmark) Run() {
 
 	pf.startTime = time.Now()
 	pf.wg.Add(pf.connectionNum)
+	successCount := int32(0)
 	for i := 0; i < pf.connectionNum; i++ {
 		rc := &ReqConn{
 			Count:      pf.reqNum,
@@ -51,18 +53,26 @@ func (pf *benchmark) Run() {
 			dialer:     dialer,
 			readWriter: NewHttpReadWriter(pf.requestBytes),
 		}
-		go func() {
-			if err = rc.Start(); err != nil {
-				fmt.Println(err.Error())
-				os.Exit(0)
+		go func(idx int, rc *ReqConn) {
+			if err := rc.Start(); err != nil {
+				fmt.Println("Failed to start connection", idx, ":", err.Error())
+				if !*ignoreErr {
+					fmt.Printf("Try increasing the timeout using flag `-t`, or use `-ignore-err` to bypass.\n\n")
+					os.Exit(0)
+				}
+			} else {
+				atomic.AddInt32(&successCount, 1)
 			}
 			pf.wg.Done()
-		}()
+		}(i, rc)
 		pf.reqConnList = append(pf.reqConnList, rc)
 	}
 	pf.wg.Wait()
 	pf.endTime = time.Now()
 
+	if successCount < int32(pf.connectionNum) {
+		fmt.Printf("\nOnly %d successful connections, with %d failure. Try increasing the timeout using flag `-t`.\n\n", successCount, int32(pf.connectionNum)-successCount)
+	}
 	return
 }
 
@@ -82,7 +92,7 @@ func (pf *benchmark) Print() {
 	fmt.Printf("%d requests in %.2fs, %s read, %s write\n", pf.reqNum, runSecond, formatFlow(float64(readAll)), formatFlow(float64(writeAll)))
 	fmt.Printf("Requests/sec: %.2f\n", float64(pf.reqNum)/runSecond)
 	fmt.Printf("Transfer/sec: %s\n", formatFlow(float64(readAll+writeAll)/runSecond))
-	fmt.Printf("Error       : %d\n", allError)
+	fmt.Printf("Error(s)    : %d\n", allError)
 	sort.Ints(allTimes)
 	rates := []int{50, 65, 75, 80, 90, 95, 98, 99, 100}
 	fmt.Println("Percentage of the requests served within a certain time (ms)")
