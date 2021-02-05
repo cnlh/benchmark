@@ -6,6 +6,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"strconv"
 )
@@ -55,11 +56,15 @@ readHeader:
 	bodyPos := bytes.Index(h.buf[:headerHasRead], bodyHeaderSepBytes)
 	if bodyPos > -1 {
 		bbArr[0] = h.buf[:bodyPos]
-		bbArr[1] = h.buf[bodyPos+bodyHeaderSepBytesLen:]
+		bbArr[1] = h.buf[bodyPos+bodyHeaderSepBytesLen : headerHasRead]
 	} else {
 		goto readHeader
 	}
 	contentStartPos := bytes.Index(bbArr[0], contentLengthBytes)
+	if contentStartPos == -1 {
+		err = errors.New("can not found content length")
+		return
+	}
 	start := contentStartPos + contentLengthBytesLen
 	end := bytes.Index(bbArr[0][start:], headerSepBytes)
 	if end == -1 {
