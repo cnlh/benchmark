@@ -55,9 +55,6 @@ func (rc *ReqConn) Start() (err error) {
 	var n int
 	var reqTime time.Time
 re:
-	if rc.conn != nil {
-		rc.conn.Close()
-	}
 	if err != nil && err != io.EOF && !strings.Contains(err.Error(), "connection reset by peer") {
 		rc.ErrorTimes += 1
 	}
@@ -79,7 +76,6 @@ re:
 		rc.readLen += n
 		rc.reqTimes = append(rc.reqTimes, int(time.Now().Sub(reqTime).Milliseconds()))
 		if atomic.AddInt64(rc.NowNum, 1) >= rc.Count {
-			rc.conn.Close()
 			return
 		}
 	}
