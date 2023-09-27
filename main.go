@@ -15,16 +15,18 @@ import (
 )
 
 var (
-	header        = flag.String("h", "", "request header, split by \\r\\n")
-	method        = flag.String("m", "GET", "request method")
-	timeout       = flag.Int("t", 10000, "request/socket timeout in ms")
-	connectionNum = flag.Int("c", 1000, "number of connection")
-	requestNum    = flag.Int("n", 100000, "number of request")
-	body          = flag.String("b", "", "body of request")
-	cpu           = flag.Int("cpu", 0, "number of cpu used")
-	host          = flag.String("host", "", "host of request")
-	proxyUrl      = flag.String("proxy", "", "proxy of request")
-	ignoreErr     = flag.Bool("ignore-err", false, "`true` to ignore error when creating connection (default false)")
+	header         = flag.String("h", "", "request header, split by \\r\\n")
+	method         = flag.String("m", "GET", "request method")
+	timeout        = flag.Int("t", 10000, "request/socket timeout in ms")
+	connectionNum  = flag.Int("c", 1000, "number of connection")
+	requestNum     = flag.Int("n", 100000, "number of request")
+	body           = flag.String("b", "", "body of request")
+	cpu            = flag.Int("cpu", 0, "number of cpu used")
+	host           = flag.String("host", "", "host of request")
+	proxyUrl       = flag.String("proxy", "", "proxy of request")
+	proxyTransport = flag.String("proxy-transport", "tcp", "proxy transport of request, \"tcp\" or \"quic\"")
+	quicProtocol   = flag.String("quic-protocol", "h3", "tls application protocol of quic transport")
+	ignoreErr      = flag.Bool("ignore-err", false, "`true` to ignore error when creating connection (default false)")
 )
 
 func main() {
@@ -68,14 +70,16 @@ func main() {
 	}
 
 	p := &benchmark{
-		connectionNum: *connectionNum,
-		reqNum:        int64(*requestNum),
-		requestBytes:  writeBytes,
-		target:        target,
-		schema:        req.URL.Scheme,
-		timeout:       *timeout,
-		reqConnList:   make([]*ReqConn, 0),
-		proxy:         *proxyUrl,
+		connectionNum:  *connectionNum,
+		reqNum:         int64(*requestNum),
+		requestBytes:   writeBytes,
+		target:         target,
+		schema:         req.URL.Scheme,
+		timeout:        *timeout,
+		reqConnList:    make([]*ReqConn, 0),
+		proxy:          *proxyUrl,
+		proxyTransport: *proxyTransport,
+		quicProtocol:   *quicProtocol,
 	}
 	p.Run()
 	p.Print()

@@ -6,6 +6,7 @@ package main
 
 import (
 	"crypto/tls"
+	"fmt"
 	"io"
 	"net"
 	"strings"
@@ -19,6 +20,7 @@ type ReqConn struct {
 	ErrorTimes int
 	Count      int64
 	NowNum     *int64
+	FailedNum  atomic.Int64
 	timeout    int
 	writeLen   int
 	readLen    int
@@ -42,8 +44,14 @@ func (rc *ReqConn) dial() error {
 	}
 	rc.conn = conn
 	if rc.schema == "https" {
+		var h string
+		h, _, err = net.SplitHostPort(rc.remoteAddr)
+		if err != nil {
+			return err
+		}
 		conf := &tls.Config{
 			InsecureSkipVerify: true,
+			ServerName:         h,
 		}
 		rc.conn = tls.Client(rc.conn, conf)
 	}
@@ -58,6 +66,10 @@ re:
 	if err != nil && err != io.EOF && !strings.Contains(err.Error(), "connection reset by peer") {
 		rc.ErrorTimes += 1
 	}
+	if rc.FailedNum.Load() >= rc.Count {
+		fmt.Println("Test aborted due to too many errors, last error:", err)
+		return
+	}
 	if err = rc.dial(); err != nil {
 		return
 	}
@@ -66,11 +78,13 @@ re:
 		rc.conn.SetDeadline(time.Now().Add(time.Millisecond * time.Duration(rc.timeout)))
 		n, err = rc.readWriter.Write(rc.conn)
 		if err != nil {
+			rc.FailedNum.Add(1)
 			goto re
 		}
 		rc.writeLen += n
 		n, err = rc.readWriter.Read(rc.conn)
 		if err != nil {
+			rc.FailedNum.Add(1)
 			goto re
 		}
 		rc.readLen += n
