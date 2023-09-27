@@ -38,6 +38,10 @@ with the flags being
       	request/socket timeout in ms (default 3000)
     -proxy string
     	proxy of request
+    -proxy-transport string
+        proxy transport of request, "tcp" or "quic" (default "tcp")
+    -quic-protocol string
+        tls application protocol of quic transport (default "h3")
 ```
 for example
 ```shell script
