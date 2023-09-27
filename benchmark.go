@@ -15,25 +15,33 @@ import (
 
 // benchmark is used to manager connection and deal with the result
 type benchmark struct {
-	connectionNum int
-	reqNum        int64
-	requestBytes  []byte
-	target        string
-	schema        string
-	proxy         string
-	timeout       int
-	startTime     time.Time
-	endTime       time.Time
-	wg            sync.WaitGroup
-	finishNum     int64
-	reqConnList   []*ReqConn
+	connectionNum  int
+	reqNum         int64
+	requestBytes   []byte
+	target         string
+	schema         string
+	proxy          string
+	proxyTransport string
+	quicProtocol   string
+	timeout        int
+	startTime      time.Time
+	endTime        time.Time
+	wg             sync.WaitGroup
+	finishNum      int64
+	reqConnList    []*ReqConn
 }
 
 // Start benchmark with the param has setting
 func (pf *benchmark) Run() {
 	fmt.Printf("Running %d test @ %s by %d connections\n", pf.reqNum, pf.target, pf.connectionNum)
+	if pf.proxyTransport == "quic" {
+		fmt.Printf("Using transport \"%s\" with application protocol \"%s\"\n", pf.proxyTransport, pf.quicProtocol)
+	}
 	fmt.Printf("Request as following format:\n\n%s\n", string(pf.requestBytes))
-	dialer, err := NewProxyConn(pf.proxy)
+	dialer, err := NewProxyConn(pf.proxy, clientProtocol{
+		transport:    pf.proxyTransport,
+		quicProtocol: pf.quicProtocol,
+	})
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(0)
@@ -97,7 +105,8 @@ func (pf *benchmark) Print() {
 	rates := []int{50, 65, 75, 80, 90, 95, 98, 99, 100}
 	fmt.Println("Percentage of the requests served within a certain time (ms)")
 	for _, v := range rates {
-		fmt.Printf("   %3d%%\t\t\t\t%d\n", v, allTimes[len(allTimes)*v/100-1])
+		// ceil
+		fmt.Printf("   %3d%%\t\t\t\t%d\n", v, allTimes[(len(allTimes)*v+100-1)/100-1])
 	}
 }
 

@@ -6,6 +6,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/base64"
 	"errors"
 	"golang.org/x/net/proxy"
 	"net"
@@ -15,16 +16,16 @@ import (
 )
 
 // Return based on proxy url
-func NewProxyConn(proxyUrl string) (ProxyConn, error) {
+func NewProxyConn(proxyUrl string, protocol clientProtocol) (ProxyConn, error) {
 	u, err := url.Parse(proxyUrl)
 	if err != nil {
 		return nil, err
 	}
 	switch u.Scheme {
 	case "socks5":
-		return &Socks5Client{u}, nil
+		return &Socks5Client{u, protocol}, nil
 	case "http":
-		return &HttpClient{u}, nil
+		return &HttpClient{u, protocol, nil}, nil
 	default:
 		return &DefaultClient{}, nil
 	}
@@ -52,14 +53,24 @@ func (dc *DefaultClient) Dial(network string, address string, timeout time.Durat
 	return net.DialTCP(network, nil, dc.rAddr)
 }
 
+type clientProtocol struct {
+	transport    string
+	quicProtocol string
+}
+
 // Socks5Client is used to implement a proxy in socks5
 type Socks5Client struct {
 	proxyUrl *url.URL
+	clientProtocol
 }
 
 // Socks5 implementation of ProxyConn
 func (s5 *Socks5Client) Dial(network string, address string, timeout time.Duration) (net.Conn, error) {
-	d, err := proxy.FromURL(s5.proxyUrl, nil)
+	var forward proxy.Dialer
+	if s5.transport == "quic" {
+		forward = NewQuicDialer([]string{s5.quicProtocol})
+	}
+	d, err := proxy.FromURL(s5.proxyUrl, forward)
 	if err != nil {
 		return nil, err
 	}
@@ -69,6 +80,14 @@ func (s5 *Socks5Client) Dial(network string, address string, timeout time.Durati
 // Socks5Client is used to implement a proxy in http
 type HttpClient struct {
 	proxyUrl *url.URL
+	clientProtocol
+	qd *QuicDialer
+}
+
+func SetHTTPProxyBasicAuth(req *http.Request, username, password string) {
+	auth := username + ":" + password
+	authEncoded := base64.StdEncoding.EncodeToString([]byte(auth))
+	req.Header.Set("Proxy-Authorization", "Basic "+authEncoded)
 }
 
 // Http implementation of ProxyConn
@@ -78,12 +97,20 @@ func (hc *HttpClient) Dial(network string, address string, timeout time.Duration
 		return nil, err
 	}
 	password, _ := hc.proxyUrl.User.Password()
-	req.SetBasicAuth(hc.proxyUrl.User.Username(), password)
-	proxyConn, err := net.DialTimeout("tcp", hc.proxyUrl.Host, timeout)
+	SetHTTPProxyBasicAuth(req, hc.proxyUrl.User.Username(), password)
+	var proxyConn net.Conn
+	if hc.transport == "quic" {
+		if hc.qd == nil {
+			hc.qd = NewQuicDialer([]string{hc.quicProtocol})
+		}
+		proxyConn, err = hc.qd.Dial(network, hc.proxyUrl.Host)
+	} else {
+		proxyConn, err = net.DialTimeout("tcp", hc.proxyUrl.Host, timeout)
+	}
 	if err != nil {
 		return nil, err
 	}
-	if err := req.Write(proxyConn); err != nil {
+	if err = req.Write(proxyConn); err != nil {
 		return nil, err
 	}
 	res, err := http.ReadResponse(bufio.NewReader(proxyConn), req)
