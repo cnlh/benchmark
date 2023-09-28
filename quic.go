@@ -5,7 +5,7 @@ import (
 	"github.com/quic-go/quic-go"
 	"golang.org/x/net/context"
 	"net"
-	"sync"
+	"runtime"
 	"sync/atomic"
 )
 
@@ -13,7 +13,6 @@ type QuicDialer struct {
 	NextProtos []string
 	streams    atomic.Uint32
 	c          quic.Connection
-	dialing    sync.RWMutex
 }
 
 func NewQuicDialer(nextProtos []string) *QuicDialer {
@@ -28,23 +27,25 @@ func (d *QuicDialer) DialContext(ctx context.Context, network, address string) (
 	now := d.streams.Add(1)
 	if now > maxStreams {
 		// wait for dialing
-		d.dialing.RLock()
-		d.dialing.RUnlock()
+		for {
+			if d.streams.Load() < maxStreams {
+				break
+			}
+			runtime.Gosched()
+		}
 		return d.DialContext(ctx, network, address)
 	}
-	if now == maxStreams+1 || now == 1 {
-		d.dialing.Lock()
+	if now == maxStreams || now == 1 {
 		c, err := quic.DialAddr(ctx, address, &tls.Config{
 			InsecureSkipVerify: true,
 			NextProtos:         d.NextProtos,
 		}, nil)
 		if err != nil {
-			d.dialing.Unlock()
+			d.streams.Store(0)
 			return nil, err
 		}
 		d.c = c
 		d.streams.Store(1)
-		d.dialing.Unlock()
 	}
 	if d.c == nil {
 		// still in initial dialing

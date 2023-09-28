@@ -23,9 +23,9 @@ func NewProxyConn(proxyUrl string, protocol clientProtocol) (ProxyConn, error) {
 	}
 	switch u.Scheme {
 	case "socks5":
-		return &Socks5Client{u, protocol}, nil
+		return NewSocks5Client(u, protocol), nil
 	case "http":
-		return &HttpClient{u, protocol, nil}, nil
+		return NewHttpClient(u, protocol), nil
 	default:
 		return &DefaultClient{}, nil
 	}
@@ -62,15 +62,20 @@ type clientProtocol struct {
 type Socks5Client struct {
 	proxyUrl *url.URL
 	clientProtocol
+	forward proxy.Dialer
+}
+
+func NewSocks5Client(proxyUrl *url.URL, protocol clientProtocol) *Socks5Client {
+	c := &Socks5Client{proxyUrl, protocol, nil}
+	if c.transport == "quic" {
+		c.forward = NewQuicDialer([]string{c.quicProtocol})
+	}
+	return c
 }
 
 // Socks5 implementation of ProxyConn
 func (s5 *Socks5Client) Dial(network string, address string, timeout time.Duration) (net.Conn, error) {
-	var forward proxy.Dialer
-	if s5.transport == "quic" {
-		forward = NewQuicDialer([]string{s5.quicProtocol})
-	}
-	d, err := proxy.FromURL(s5.proxyUrl, forward)
+	d, err := proxy.FromURL(s5.proxyUrl, s5.forward)
 	if err != nil {
 		return nil, err
 	}
@@ -82,6 +87,14 @@ type HttpClient struct {
 	proxyUrl *url.URL
 	clientProtocol
 	qd *QuicDialer
+}
+
+func NewHttpClient(proxyUrl *url.URL, protocol clientProtocol) *HttpClient {
+	c := &HttpClient{proxyUrl, protocol, nil}
+	if c.transport == "quic" {
+		c.qd = NewQuicDialer([]string{c.quicProtocol})
+	}
+	return c
 }
 
 func SetHTTPProxyBasicAuth(req *http.Request, username, password string) {
@@ -100,9 +113,6 @@ func (hc *HttpClient) Dial(network string, address string, timeout time.Duration
 	SetHTTPProxyBasicAuth(req, hc.proxyUrl.User.Username(), password)
 	var proxyConn net.Conn
 	if hc.transport == "quic" {
-		if hc.qd == nil {
-			hc.qd = NewQuicDialer([]string{hc.quicProtocol})
-		}
 		proxyConn, err = hc.qd.Dial(network, hc.proxyUrl.Host)
 	} else {
 		proxyConn, err = net.DialTimeout("tcp", hc.proxyUrl.Host, timeout)
